@@ -1,9 +1,6 @@
-from cgi import test
-from hashlib import new
-import imp
+
 from objects import Card, Hand,Dealer, Agent 
 from random import *
-import copy
 import concurrent.futures as threading
 import ea
 import time
@@ -99,41 +96,39 @@ def playMulitpleRounds():
     agent = Agent()
     for i in range(0,50):
         dealer.play()
+        # print(str(agent))
         agent.playHands(dealer)
         dealer.reDeal()
         agent.reDeal()
     print(str(agent))
 
 def testLogicUpdating():
-    agents = []
-    for i in range(0,100):
-       agents.append(Agent())
-    dealer =Dealer()
-    start = time.process_time_ns()
-    roundsStart = time.process_time_ns()
-    ea.playRounds(agents,dealer,100)
-    print("time for rounds: %f" % (time.process_time_ns()-roundsStart))
-    logicStart = time.process_time_ns()
-    ea.updateLogic(agents)
-    print("time for logic updating: %f" % (time.process_time_ns()-logicStart))
-    revStart = time.process_time_ns()
-    for agent in agents:
-        agent.revenue = 0
-    print("time for rev: %f" % (time.process_time_ns()-revStart))
-    print("time for total: %f" % (time.process_time_ns()-start))
+    evo =ea.Evolution(100)
+    ag = evo.agents[0]
+    print(str(ag.actionHandler))
+    print(ag.hands[0].sum())
+    evo.runGeneration(50)
+    evo.agents = evo.updateLogic()
+    print(str(ag.actionHandler))
+    print(ag.hands[0].sum())
+
+def evolov():
+    evo =ea.Evolution(100)
+    evo.evolve(4, 100, 200)
 
 def eaPlayRoundsTest():
     start = time.process_time()
     agents = []
     dealer = Dealer()
-    for i in range(0,500):
+    for i in range(0,150):
         agents.append(Agent())
-    ea.playRounds(agents,dealer,200)
+    ea.playRounds(agents,dealer,100)
     print("time: %f" % (time.process_time()-start))
 
 
 if __name__ == '__main__':   
-    eaPlayRoundsTest()
+    evolov()
+    # eaPlayRoundsTest()
     # testLogicUpdating()
     # testSplit()
     # testDoubleDown()

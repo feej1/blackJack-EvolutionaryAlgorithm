@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 from random import Random
         
 #https://m.media-amazon.com/images/I/71BA2ZSWd-L._AC_SY679_.jpg
@@ -45,9 +44,10 @@ class Hand:
         self.cards.append(secondCard)
         self.canDoubleDown = True   ## bool indicating the ability ot double down, and the hit 
         self.stake = 1           ## amount bet on hand, added because double down hands pay double stake
-
+        self.actions = 0
     ## actions
 
+    ## returns if doubled or not
     def doubleDown(self):
         if self.canDoubleDown:
             self.hit()
@@ -55,32 +55,39 @@ class Hand:
             return True
         return False
 
+    ## if cansplit returns new hand if it can split
     def split(self):
         if self.canSplit():
-            card = self.cards.pop()
+            card = self.cards.pop()  ## gets rid of second card
             newHand = Hand()
-            if card.isAce:
+            ## if the card is an ace generate a card w/ val 11 as first card in new hand
+            ## else add the card
+            if card.isAce:            
                 newHand.cards = [Card(1)]
-            else:
+            else:    
                 newHand.cards = [card]
+            ## gets a new card for each hand
             newHand.hit()
             newHand.canDoubleDown =True
             self.hit()
             self.canDoubleDown =True
             return newHand
-        return NULL
         
-
-    def hit(self):
-        if not self.isBust() or self.canDoubleDown:
+    ## return true if hand is fininshed ie: busted this hit, or was called with busted hand
+    def hit(self) -> bool:
+        if not self.isBust():
             newCard = Card()
-             ##consider options A X , hit bust, A to 1 ---> AX hit no bust keep 11,  AX hit A second ace 1
+            ## handles options   
+            # XX: hit ace and bust --> A goes to 1   
+            # AX: hit and bust --> A goes to 1     
+            # AX: hit no bust --> keep 11,  
+            # AX: hit A second --> second ace goes to one
             if (self.containsAce() and newCard.isAce) or (newCard.isAce and self.sum() + 11 > 21 ): newCard.switchValueForAce()
             if self.containsAce() and self.sum() + newCard.value > 21: self.cards[self.getFirstAceIndex()].switchValueForAce()
             self.cards.append(newCard)
-            self.canDoubleDown = False 
-            if self.sum() < 21: return True
-        return False
+            self.canDoubleDown =False
+            if self.sum() <= 21: return False
+        return True
 
     ## states
 
@@ -147,73 +154,76 @@ class Dealer:
         return f'dealer hand: {self.hand.toString()}   sum:  {self.hand.sum()}'
 
 
+class actionHandler():
+    def __init__(self) -> None:
+        self.regLogic, self.doublesLogic = self.createLogicMatricies()
 
+    def createLogicMatricies(self):
+        options = ["H", "D", "S"]   # for hand without doubles H --> hit D --> double down  S--> stay
+        doublesOptions = ["H", "D", "S", "SP"]  # for hand with doubles  SP --> split
+        generator = Random()
 
-## 100 agents each iteration top 20 make new agents, by passing its logic matrix and generatic mutations with p = .05
+        ## where arr [x][y] gives the xth row and yth column, where columns represent a dealers card and rows represent the players hand
+        ## both arrays are filled with random actions, that are likley not a good choice ei hit on 20, stay on 4 etc
+        logicMatrix = [ [options[generator.randint(0,2)] for i in range(2,12)] for i in range (1,18)]
+        doublesLogicMatrix = [ [doublesOptions[generator.randint(0,3)] for i in range(2,12)] for i in range(2,12)]   
+
+        return logicMatrix, doublesLogicMatrix  # return the both randomly decided newly created matricies
+
+    def getAction(self, hand, dealerCard) -> str:
+        if hand.canSplit(): 
+            return self.doublesLogic[11 - hand.cards[0].value][dealerCard.value-2]  
+        else: 
+            return self.regLogic[21-hand.sum()][dealerCard.value-2] ## 21-sum accounts for smallest sum being 2+3 = 5 to get the first index. thats not a able to split
+
+    def takeAction(self, hand, action) -> bool:  ## once a hand stays, BJ's, or busts its finished
+        # print(action)
+        handFinished = False
+        if action =='H': 
+            if hand.hit(): handFinished = True
+        elif action == 'D': 
+            hand.doubleDown()  ## decide on how to handle action resolving to double, but its not your first move -- H or S??
+            handFinished = True
+        elif action == 'SP': 
+            newHand = hand.split() ## gets new hand for agent
+            return False, newHand
+        else:  
+            ## else it must be stay and therfore hand is finished
+            handFinished = True 
+        return handFinished, None
+
+    def __str__(self) -> str:
+        printStr = "-----------Logic Matrix----------\n"
+        printStr += "    2  3  4  5  6  7  8  9  10 A"
+        for j in range(0, len(self.regLogic)):   # looping over rows'
+            if j+5 <= 9: printStr += f'\n{j+5} : '
+            else: printStr += f'\n{j+5}: '
+            for i in range(0, len(self.regLogic[j])):     # looping over elements
+                printStr += f'{self.regLogic[j][i]}  ' 
+        printStr += "\n"
+        return printStr
 
 
 class Agent:
     def __init__(self):
-        self.logic, self.splitLogic  = self.createLogicMatrix() # returns both arrays
+        # self.logic, self.splitLogic  = self.createLogicMatrix() # returns both arrays
         self.hands = [Hand()]
         self.revenue = 0.0
+        self.actionHandler = actionHandler()
 
     def resetRevenue(self):
         self.revenue = 0
 
-    def printLogic(self):
-        print("-----------Logic Matrix----------")
-        print("    2  3  4  5  6  7  8  9  10 A", end="")
-        for j in range(0, len(self.logic)):   # looping over rows'
-            if j+5 <= 9: print(f'\n{j+5} : ', end="")
-            else: print(f'\n{j+5}: ', end="")
-            for i in range(0, len(self.logic[j])):     # looping over elements
-                print(f'{self.logic[j][i]}  ',end="") 
-        print("")
-
-
-    def createLogicMatrix(self):
-        options = ["H", "D", "S"]   # for hand without doubles
-        doublesOptions = ["H", "D", "S", "SP"]  # for hand with doubles
-        generator = Random()
-        logicMatrix = [ [options[generator.randint(0,2)] for i in range(2,12)] for i in range (1,18)]
-        doublesLogicMatrix = [ [doublesOptions[generator.randint(0,3)] for i in range(2,12)] for i in range(2,12)]   #where arr [x][y] gives the xth row and yth column, retrieve action using arr[hand sum][dealer card num]
-
-        return logicMatrix, doublesLogicMatrix  # return the both randomly decided newly created matricies
-
-    def getAction(self, hand, dealerCard):
-        if hand.canSplit(): 
-            return self.splitLogic[11 - hand.cards[0].value][dealerCard.value-2]  
-        else: 
-            return self.logic[21-hand.sum()][dealerCard.value-2] ## 21-sum accounts for smallest sum being 2+3 = 5 to get the first index. thats not a able to split
-
-    def takeAction(self,hand, dealerCard):  ## once a hand stays, BJ's, or busts its finished
-        action = self.getAction(hand, dealerCard)   # gets a list of actions to take for each hand
-        handFinished = False
-        if action =='H': 
-            if not hand.hit():    ## hit returns false when busted or DD, if case then hand is fininshed playing, take off of active hands append to fininshed for results
-                handFinished = True
-        elif action == 'D': 
-            if hand.doubleDown(): 
-                handFinished = True
-            elif not hand.hit(): 
-                ## hits when it can't double
-                handFinished = True
-        elif action == 'SP': 
-            self.hands.append(hand.split()) # adds a new hand and hits the old
-            handFinished = False
-        else:  
-            handFinished = True
-        return handFinished
-
-    def playHand(self, hand, dealerCard):  ## once a hand stays, BJ's, or busts its finished
+    def playHand(self, hand, dealerCard): 
         handFinished = False
         while not handFinished:
-            handFinished = self.takeAction(hand,dealerCard)
-        
+            handFinished, newHand = self.actionHandler.takeAction(hand, self.actionHandler.getAction(hand, dealerCard))
+            if newHand != None: self.hands.append(newHand)
+
     def playHands(self, dealer):  ## pass in dealer that has played, play each hand assess results
+        dealerCard = dealer.getFaceUpCard()
         for hand in self.hands:
-            self.playHand(hand, dealer.getFaceUpCard())
+            self.playHand(hand, dealerCard)
             self.processResult(hand, dealer.sum())
 
     def processResult(self,hand, dealerRes):
