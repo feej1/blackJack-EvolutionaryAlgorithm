@@ -48,7 +48,7 @@ jobs:
     - name: Upload to Azure Storage
       uses: bacongobbler/azure-blob-storage-upload@main
       with:
-        source_dir: ./dist
+        source_dir: ./dist/windows
         container_name: github-build-artifact
         connection_string: ${{ secrets.ConnectionString }}
         # WARNING: this will overwrite existing blobs in your blob storage
