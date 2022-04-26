@@ -2,6 +2,7 @@ from objects import Card, Hand,Dealer, Agent
 from quickSort import *
 from random import Random
 import concurrent.futures as threading
+import threading
 
 ROUNDS = 50
 P = .05
@@ -16,6 +17,7 @@ class Evolution:
         self.agentCount = agentCount
         self.dealer = Dealer()
         self.generationCount = 0
+        self.stop_thread = False
 
     
     def evolve(self, uiCallback, handsPer, generations):
@@ -23,9 +25,10 @@ class Evolution:
             for agent in self.agents: agent.revenue = 0.0  ## change to map
             self.runGeneration(handsPer)
             self.updateLogic()
-            if i % 10 == 0:
-                print(i)
-                print(self.getAverageLoss(10))
+            if self.stop_thread: break
+            if i % 5 == 0:
+                # print(i)
+                # print(self.getAverageLoss(10))
                 uiCallback(self.agents, self.generationCount, handsPer, self.getAverageLoss(10))
 
     def runGeneration(self, handsPer):
