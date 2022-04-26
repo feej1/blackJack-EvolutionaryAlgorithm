@@ -41,12 +41,15 @@ jobs:
     
     - name: print dir
       run: |
-        ls 
         cd ./dist
-        ls
-    
-#     - name: Upload artifact
-#       uses: actions/upload-artifact@v2
-#       with:
-#         name: "blackjack executable"
-#         path: ./dist/windows
+        ls ./dist/windows
+
+    - name: Upload to Azure Storage
+      uses: bacongobbler/azure-blob-storage-upload@main
+      with:
+        source_dir: ./dist/windows
+        container_name: github-build-artifact
+        connection_string: ${{ secrets.ConnectionString }}
+        extra_args: '--pattern *.tar.gz'
+        # WARNING: this will overwrite existing blobs in your blob storage
+        overwrite: 'true'
