@@ -51,6 +51,5 @@ jobs:
         source_dir: ./dist
         container_name: github-build-artifact
         connection_string: ${{ secrets.ConnectionString }}
-        extra_args: '--pattern *.tar.gz'
         # WARNING: this will overwrite existing blobs in your blob storage
         overwrite: 'true'
