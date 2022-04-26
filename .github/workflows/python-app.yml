@@ -42,7 +42,7 @@ jobs:
     - name: print dir
       run: |
         cd ./dist
-        ls ./dist/windows
+        ls ./windows
 
     - name: Upload to Azure Storage
       uses: bacongobbler/azure-blob-storage-upload@main
