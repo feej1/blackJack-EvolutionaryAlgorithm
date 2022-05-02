@@ -112,21 +112,7 @@ def updateLogic(agents):
             newlogic.append(newRow)
         agents[i-int(len(agents)/3)].actionHandler.regLogic = newlogic
 
-# def playRounds(agents, dealer, rounds):
-#     for i in range(0,rounds):
-#         print(i)
-#         dealer.play()
-#         with threading.ThreadPoolExecutor(max_workers=10) as worker:
-#             # for agent in agents: worker.submit(agent.playHands, dealer)
-#             worker.map(lambda agent: agent.playHands(dealer), agents)
-#         # for agent in agents:
-#         #     executor.submit(agent.playHands, dealer)
-#         # with threading.ThreadPoolExecutor(max_workers=20) as worker:
-#         #     for agent in agents: worker.submit(agent.reDeal)
-#         for agent in agents:
-#             agent.reDeal()
-#         dealer.reDeal()
-#     return agents
+
 
 
 

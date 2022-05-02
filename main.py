@@ -160,7 +160,7 @@ class UI:
 
         ## hands per round control and label
         self.handsVal = tk.StringVar(value=100)
-        handSpinner = tk.Spinbox(root,from_=20, to=200, textvariable=self.handsVal , wrap=False).grid(row=3,column=25)
+        handSpinner = tk.Spinbox(root,from_=20, to=20000, textvariable=self.handsVal , wrap=False).grid(row=3,column=25)
         handsControlLabel = tk.Label(root, text="Hands Per Round:", padx=5).grid(row=3, column=24, sticky=tk.W)
 
         ## rounds control and label
@@ -288,6 +288,3 @@ class ColorUpdater:
 
 
 ui = UI() 
-
-
-

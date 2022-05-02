@@ -52,6 +52,7 @@ class Hand:
         if self.canDoubleDown:
             self.hit()
             self.stake = self.stake * 2
+            self.canDoubleDown = False
             return True
         return False
 
